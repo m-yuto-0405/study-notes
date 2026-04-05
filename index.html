@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>日記</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: #f5f0eb;
+      color: #333;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: #5a4a3a;
+    }
+
+    .editor {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 24px;
+    }
+
+    .editor .date {
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 140px;
+      border: none;
+      outline: none;
+      resize: none;
+      font-size: 1rem;
+      line-height: 1.7;
+      font-family: inherit;
+      color: #333;
+    }
+
+    textarea::placeholder { color: #bbb; }
+
+    .editor-footer {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 12px;
+    }
+
+    button {
+      background: #7c6a55;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 20px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover { background: #5a4a3a; }
+
+    .entries { display: flex; flex-direction: column; gap: 12px; }
+
+    .entry {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .entry-date {
+      font-size: 0.82rem;
+      color: #888;
+    }
+
+    .entry-delete {
+      background: none;
+      color: #ccc;
+      padding: 2px 6px;
+      font-size: 0.8rem;
+      border-radius: 4px;
+    }
+
+    .entry-delete:hover { background: #fee; color: #e55; }
+
+    .entry-body {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .empty {
+      text-align: center;
+      color: #bbb;
+      font-size: 0.9rem;
+      padding: 32px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>日記</h1>
+
+    <div class="editor">
+      <div class="date" id="today"></div>
+      <textarea id="input" placeholder="今日はどんな一日でしたか？"></textarea>
+      <div class="editor-footer">
+        <button onclick="save()">保存</button>
+      </div>
+    </div>
+
+    <div class="entries" id="entries"></div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'diary_entries';
+
+    function formatDate(iso) {
+      const d = new Date(iso);
+      return d.toLocaleDateString('ja-JP', {
+        year: 'numeric', month: 'long', day: 'numeric',
+        weekday: 'short', hour: '2-digit', minute: '2-digit'
+      });
+    }
+
+    function load() {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    }
+
+    function store(entries) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    }
+
+    function save() {
+      const text = document.getElementById('input').value.trim();
+      if (!text) return;
+      const entries = load();
+      entries.unshift({ id: Date.now(), date: new Date().toISOString(), body: text });
+      store(entries);
+      document.getElementById('input').value = '';
+      render();
+    }
+
+    function remove(id) {
+      if (!confirm('この日記を削除しますか？')) return;
+      store(load().filter(e => e.id !== id));
+      render();
+    }
+
+    function render() {
+      const entries = load();
+      const el = document.getElementById('entries');
+      if (!entries.length) {
+        el.innerHTML = '<p class="empty">まだ日記がありません</p>';
+        return;
+      }
+      el.innerHTML = entries.map(e => `
+        <div class="entry">
+          <div class="entry-header">
+            <span class="entry-date">${formatDate(e.date)}</span>
+            <button class="entry-delete" onclick="remove(${e.id})">削除</button>
+          </div>
+          <div class="entry-body">${escapeHtml(e.body)}</div>
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    document.getElementById('today').textContent =
+      new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+
+    render();
+  </script>
+</body>
+</html>
