@@ -9,6 +9,7 @@ type Props = {
 }
 
 export function NoteList({ notes, onSelect }: Props) {
+  const news = notes.filter(n => n.category === 'news')
   const topics = notes.filter(n => n.category === 'topics')
   const til = notes.filter(n => n.category === 'til')
   const [showQR, setShowQR] = useState(false)
@@ -28,6 +29,18 @@ export function NoteList({ notes, onSelect }: Props) {
           <QRCodeSVG value={url} size={160} />
           <p className={styles.qrUrl}>{url}</p>
         </div>
+      )}
+
+      {news.length > 0 && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>NEWS</h2>
+          {news.map(note => (
+            <button key={note.id} className={styles.card} onClick={() => onSelect(note.id)}>
+              <span className={styles.cardTitle}>{note.title}</span>
+              <span className={styles.arrow}>→</span>
+            </button>
+          ))}
+        </section>
       )}
 
       {topics.length > 0 && (

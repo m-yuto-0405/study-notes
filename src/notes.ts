@@ -1,7 +1,7 @@
 export type Note = {
   id: string
   title: string
-  category: 'topics' | 'til'
+  category: 'topics' | 'til' | 'news'
   content: string
 }
 
@@ -15,8 +15,18 @@ function filenameToTitle(filename: string): string {
 
 const topicFiles = import.meta.glob('./content/topics/*.md', { eager: true, query: '?raw', import: 'default' })
 const tilFiles = import.meta.glob('./content/til/*.md', { eager: true, query: '?raw', import: 'default' })
+const newsFiles = import.meta.glob('./content/news/*.md', { eager: true, query: '?raw', import: 'default' })
 
 export const notes: Note[] = [
+  ...Object.entries(newsFiles).map(([path, content]) => {
+    const filename = path.split('/').pop()!
+    return {
+      id: `news-${filename}`,
+      title: filename.replace(/\.md$/, ''),
+      category: 'news' as const,
+      content: content as string,
+    }
+  }).sort((a, b) => b.title.localeCompare(a.title)),
   ...Object.entries(topicFiles).map(([path, content]) => {
     const filename = path.split('/').pop()!
     return {
