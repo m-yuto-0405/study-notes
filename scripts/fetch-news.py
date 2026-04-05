@@ -5,6 +5,7 @@ import feedparser
 import datetime
 import os
 import re
+from deep_translator import GoogleTranslator
 
 # JST = UTC+9
 today = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
@@ -12,7 +13,6 @@ date_str = today.strftime('%Y-%m-%d')
 
 OUTPUT_PATH = f"src/content/news/{date_str}.md"
 
-# すでに今日のファイルがあればスキップ
 if os.path.exists(OUTPUT_PATH):
     print(f"Already exists: {OUTPUT_PATH}")
     exit(0)
@@ -40,10 +40,20 @@ FEEDS = [
     },
 ]
 
+translator = GoogleTranslator(source='auto', target='ja')
+
+def translate(text: str) -> str:
+    if not text:
+        return ''
+    try:
+        return translator.translate(text[:500])
+    except Exception:
+        return text
+
 def clean_text(text: str) -> str:
     text = re.sub(r'<[^>]+>', '', text)
     text = re.sub(r'\s+', ' ', text).strip()
-    return text[:120] + '...' if len(text) > 120 else text
+    return text[:300]
 
 articles_by_category: dict[str, list[str]] = {}
 
@@ -55,16 +65,16 @@ for feed_info in FEEDS:
             articles_by_category[category] = []
 
         for entry in feed.entries[:3]:
-            title = clean_text(entry.get('title', 'タイトルなし'))
+            title_raw = clean_text(entry.get('title', ''))
+            summary_raw = clean_text(entry.get('summary', entry.get('description', '')))
             link = entry.get('link', '')
-            summary = clean_text(entry.get('summary', entry.get('description', '')))
             source = feed_info["label"]
 
-            line = f"- **[{title}]({link})**"
-            if summary:
-                line += f" - {summary}"
-            line += f"\n  *ソース: {source}*"
-            articles_by_category[category].append(line)
+            title_ja = translate(title_raw)
+            summary_ja = translate(summary_raw) if summary_raw else ''
+
+            block = f"**[{title_ja}]({link})**\n{summary_ja}\n\n<small>ソース: {source} - {link}</small>"
+            articles_by_category[category].append(block)
 
         print(f"OK: {feed_info['label']} ({len(feed.entries)} entries)")
     except Exception as e:
@@ -79,7 +89,9 @@ lines = [f"# ニュース - {date_str}\n"]
 for category, articles in articles_by_category.items():
     if articles:
         lines.append(f"## {category}\n")
-        lines.extend(articles)
+        for article in articles:
+            lines.append(article)
+            lines.append("---")
         lines.append("")
 
 os.makedirs("src/content/news", exist_ok=True)

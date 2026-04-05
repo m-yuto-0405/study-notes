@@ -18,8 +18,8 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: feedparser インストール
-        run: pip install feedparser
+      - name: 依存パッケージ インストール
+        run: pip install feedparser deep-translator
 
       - name: ニュース収集
         run: python scripts/fetch-news.py
