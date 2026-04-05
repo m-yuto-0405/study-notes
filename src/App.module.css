@@ -1,0 +1,15 @@
+.container {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.heading {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: #5a4a3a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
