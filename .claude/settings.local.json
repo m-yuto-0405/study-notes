@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(wc -l src/content/topics/*.md)"
+      "Bash(wc -l src/content/topics/*.md)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)"
     ]
   }
 }
